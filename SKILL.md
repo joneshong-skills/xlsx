@@ -15,13 +15,17 @@ description: >-
   report, standalone Python script, database pipeline, or Google Sheets API
   integration, even if tabular data is involved.
   Trigger phrases: "建立試算表", "產生 xlsx", "做 Excel", "製作表格", "寫 Excel".
-version: 1.0.0
-tools: Bash, Read, Write, Edit
+version: 1.1.0
+tools: Bash, Read, Write, Edit, sandbox_execute
 argument-hint: "[input.xlsx] [describe what you want to do]"
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
 # Requirements for Outputs
+
+## Agent Delegation
+
+Delegate document processing to `worker` agent.
 
 ## All Excel files
 
@@ -147,6 +151,22 @@ sheet['D20'] = '=AVERAGE(D2:D19)'
 This applies to ALL calculations - totals, percentages, ratios, differences, etc. The spreadsheet should be able to recalculate when source data changes.
 
 ## Common Workflow
+
+> **Sandbox acceleration**: Formula recalculation and batch spreadsheet builds run efficiently in `sandbox_execute`.
+>
+> Preferred (Sandbox):
+> ```python
+> import sys; sys.path.insert(0, '/Users/joneshong/.claude/skills/xlsx/scripts')
+> import recalc
+> result = recalc.recalculate('/path/to/output.xlsx')
+> output(result)
+> ```
+>
+> Fallback (Bash):
+> ```bash
+> python3 ~/.claude/skills/xlsx/scripts/recalc.py output.xlsx
+> ```
+
 1. **Choose tool**: pandas for data, openpyxl for formulas/formatting
 2. **Create/Load**: Create new workbook or load existing file
 3. **Modify**: Add/edit data, formulas, and formatting
@@ -307,6 +327,15 @@ The script returns JSON with error details:
 - Add comments to cells with complex formulas or important assumptions
 - Document data sources for hardcoded values
 - Include notes for key calculations and model sections
+
+## Sandbox Optimization
+
+This skill is **sandbox-optimized**. Batch operations run inside `sandbox_execute`:
+
+- **Formula recalculation**: Import `scripts/recalc.py` in sandbox to trigger LibreOffice recalc and return JSON error report
+- **Batch spreadsheet generation**: Build multiple sheets in one sandbox call — create workbook, populate data, save, recalculate, verify
+
+Principle: **Deterministic batch work → sandbox; reasoning/presentation → LLM.**
 
 ## Continuous Improvement
 
